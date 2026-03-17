@@ -1,7 +1,6 @@
 ---
 title: 'Update task'
 description: 'Update the fields of an existing task owned by the authenticated user.'
-api: 'PUT /api/tasks/{taskId}'
 ---
 
 ## Path parameters
@@ -83,7 +82,7 @@ All body fields are optional. Omitting a field leaves its current value unchange
 
 ```bash cURL
 curl --request PUT \
-  --url https://api.maishabito.com/api/tasks/42 \
+  --url http://localhost:3000/api/tasks/42 \
   --header 'Authorization: Bearer <token>' \
   --header 'Content-Type: application/json' \
   --data '{

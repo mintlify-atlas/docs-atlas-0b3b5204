@@ -17,7 +17,7 @@ Requires authentication.
 
 ```bash cURL
 curl --request GET \
-  --url https://api.maishabito.com/api/user-challenges \
+  --url http://localhost:3000/api/user-challenges \
   --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
 ```
 
@@ -105,9 +105,9 @@ Returns an empty array `[]` if the user has never accepted a challenge.
     "updated_at": "2026-03-17T09:00:00.000Z",
     "template": {
       "id": 3,
-      "title": "Desafio de 21 Dias",
-      "description": "Vinte e um dias para transformar uma ação em hábito consolidado.",
-      "duration_days": 21
+      "title": "Maratona de 30 Dias",
+      "description": "Um mês inteiro de dedicação. Complete suas tarefas todos os dias por 30 dias.",
+      "duration_days": 30
     }
   },
   {
@@ -122,8 +122,8 @@ Returns an empty array `[]` if the user has never accepted a challenge.
     "updated_at": "2026-02-08T20:14:00.000Z",
     "template": {
       "id": 1,
-      "title": "Desafio de 7 Dias",
-      "description": "Sete dias para começar a construir um novo hábito.",
+      "title": "7 Dias de Foco Total",
+      "description": "Complete todas as suas tarefas diárias por 7 dias consecutivos. Mantenha o foco e a disciplina!",
       "duration_days": 7
     }
   }

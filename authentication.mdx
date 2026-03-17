@@ -111,7 +111,7 @@ curl -X POST http://localhost:3000/api/auth/signup \
 ```
 
 ```bash Step 2 — call a protected endpoint
-curl http://localhost:3000/api/user \
+curl http://localhost:3000/api/user/profile \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -125,14 +125,22 @@ Only the two auth routes are public. Every other endpoint requires a valid Beare
 |---|---|
 | `POST /api/auth/signup` | No |
 | `POST /api/auth/login` | No |
-| `GET /api/user` | Yes |
-| `PATCH /api/user` | Yes |
+| `GET /api/user/profile` | Yes |
+| `PUT /api/user/profile` | Yes |
 | `GET /api/challenge-templates` | Yes |
 | `POST /api/challenge-templates` | Yes |
+| `GET /api/challenge-templates/:id` | Yes |
+| `DELETE /api/challenge-templates/:id` | Yes |
 | `GET /api/user-challenges` | Yes |
-| `POST /api/user-challenges` | Yes |
-| `GET /api/tasks` | Yes |
+| `GET /api/user-challenges/active` | Yes |
+| `POST /api/user-challenges/accept` | Yes |
+| `PUT /api/user-challenges/:id/complete` | Yes |
+| `PUT /api/user-challenges/:id/abandon` | Yes |
+| `PUT /api/user-challenges/:id/notes` | Yes |
+| `GET /api/tasks/me` | Yes |
 | `POST /api/tasks` | Yes |
+| `PUT /api/tasks/:taskId` | Yes |
+| `DELETE /api/tasks/:taskId` | Yes |
 | `POST /api/task-completions` | Yes |
 
 ## The auth middleware

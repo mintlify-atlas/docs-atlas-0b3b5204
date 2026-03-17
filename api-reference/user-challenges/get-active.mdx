@@ -22,7 +22,7 @@ Requires authentication.
 
 ```bash cURL
 curl --request GET \
-  --url https://api.maishabito.com/api/user-challenges/active \
+  --url http://localhost:3000/api/user-challenges/active \
   --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
 ```
 
@@ -106,9 +106,9 @@ currently active.
   "updated_at": "2026-03-17T09:00:00.000Z",
   "template": {
     "id": 3,
-    "title": "Desafio de 21 Dias",
-    "description": "Vinte e um dias para transformar uma ação em hábito consolidado.",
-    "duration_days": 21
+    "title": "Maratona de 30 Dias",
+    "description": "Um mês inteiro de dedicação. Complete suas tarefas todos os dias por 30 dias.",
+    "duration_days": 30
   }
 }
 ```

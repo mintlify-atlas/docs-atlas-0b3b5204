@@ -1,7 +1,6 @@
 ---
 title: 'Create task'
 description: 'Create a new task for the authenticated user.'
-api: 'POST /api/tasks'
 ---
 
 <Note>
@@ -83,7 +82,7 @@ api: 'POST /api/tasks'
 
 ```bash cURL
 curl --request POST \
-  --url https://api.maishabito.com/api/tasks \
+  --url http://localhost:3000/api/tasks \
   --header 'Authorization: Bearer <token>' \
   --header 'Content-Type: application/json' \
   --data '{

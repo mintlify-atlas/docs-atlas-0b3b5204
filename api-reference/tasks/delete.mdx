@@ -1,7 +1,6 @@
 ---
 title: 'Delete task'
 description: 'Permanently delete a task owned by the authenticated user.'
-api: 'DELETE /api/tasks/{taskId}'
 ---
 
 ## Path parameters
@@ -28,7 +27,7 @@ All task completion records associated with this task are also deleted automatic
 
 ```bash cURL
 curl --request DELETE \
-  --url https://api.maishabito.com/api/tasks/42 \
+  --url http://localhost:3000/api/tasks/42 \
   --header 'Authorization: Bearer <token>'
 ```
 

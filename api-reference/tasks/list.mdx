@@ -1,7 +1,6 @@
 ---
 title: 'List tasks'
 description: 'Retrieve all tasks belonging to the authenticated user.'
-api: 'GET /api/tasks/me'
 ---
 
 <Info>
@@ -74,7 +73,7 @@ api: 'GET /api/tasks/me'
 
 ```bash cURL
 curl --request GET \
-  --url https://api.maishabito.com/api/tasks/me \
+  --url http://localhost:3000/api/tasks/me \
   --header 'Authorization: Bearer <token>'
 ```
 

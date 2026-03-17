@@ -1,7 +1,6 @@
 ---
 title: 'Complete a task'
 description: 'Record a task completion and apply gamification effects — points, streaks, and personal records.'
-api: 'POST /api/task-completions'
 ---
 
 This is the core gamification endpoint. Calling it does three things atomically:
@@ -96,7 +95,7 @@ await userRepository.update(userId, {
 
 ```bash cURL
 curl --request POST \
-  --url https://api.maishabito.com/api/task-completions \
+  --url http://localhost:3000/api/task-completions \
   --header 'Authorization: Bearer <token>' \
   --header 'Content-Type: application/json' \
   --data '{

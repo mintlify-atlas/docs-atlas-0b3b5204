@@ -17,7 +17,7 @@ Requires authentication.
 
 ```bash cURL
 curl --request GET \
-  --url https://api.maishabito.com/api/user/profile \
+  --url http://localhost:3000/api/user/profile \
   --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
 ```
 
@@ -68,7 +68,7 @@ curl --request GET \
   "id": "a3f2c1d0-89b4-4e7a-b6f5-1234567890ab",
   "name": "Maria Silva",
   "email": "maria@example.com",
-  "profile_picture": "https://cdn.maishabito.com/avatars/maria.jpg",
+  "profile_picture": "https://example.com/avatars/maria.jpg",
   "points": 120,
   "current_streak": 5,
   "max_streak": 14,
