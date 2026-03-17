@@ -1,0 +1,134 @@
+---
+title: "Gamification"
+description: "How points, XP, and the reward system work in Mais Hábito API."
+---
+
+Mais Hábito uses a points-based gamification system to reward consistent habit completion. Every time a user completes a task, they earn points — and their streak grows.
+
+<Info>
+  XP and points are the same concept in Mais Hábito. There is a single unified `points` field on the `User` model. There is no separate XP currency.
+</Info>
+
+## User model — gamification fields
+
+```typescript models/User.ts
+export interface User {
+  id: string;
+  name: string;
+  profile_picture: string | null;
+  points: number;          // Total accumulated points
+  current_streak: number;  // Current consecutive-day streak
+  max_streak: number;      // All-time highest streak reached
+  created_at: Date;
+  updated_at: Date;
+}
+```
+
+## Task points
+
+Every task carries a configurable `points` field. When you create a task, you choose how many points completing it awards.
+
+```typescript models/Task.ts
+export interface Task {
+  id: number;
+  user_id: string;
+  challenge_template_id: number | null;
+  title: string;
+  description: string | null;
+  points: number;            // Configurable per task
+  is_daily_routine: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+```
+
+The service enforces that `points` must be greater than zero:
+
+```typescript services/task.service.ts
+if (points <= 0)
+  throw new BadRequestError("Points must be greater than zero");
+```
+
+<Tip>
+  Assign higher point values to harder or more impactful tasks. This naturally encourages users to prioritize high-value habits and reflects real effort in their total score.
+</Tip>
+
+## How points are earned — task completion flow
+
+When a client calls `POST /api/task-completions`, the `taskCompletionService.completeTask()` function runs the following steps:
+
+<Steps>
+  <Step title="Validate task ownership">
+    The service fetches the task by ID and confirms it exists and belongs to the authenticated user.
+
+    ```typescript services/taskCompletion.service.ts
+    const task = await taskRepository.findById(task_id);
+    if (!task) throw new NotFoundError("Task not found");
+    if (task.user_id !== userId)
+      throw new BadRequestError("This task doesn't belong to you");
+    ```
+  </Step>
+
+  <Step title="Check for prior completion today">
+    The service queries for any completions by this user with a `completed_at` timestamp within today's date (UTC). The result determines whether the streak should increment.
+
+    ```typescript services/taskCompletion.service.ts
+    const todayCompletions =
+      await taskCompletionRepository.findByUserIdToday(userId);
+    const hasCompletedToday = todayCompletions.length > 0;
+    ```
+  </Step>
+
+  <Step title="Create the TaskCompletion record">
+    A new row is inserted into the `task_completions` table, recording the `task_id`, `user_id`, and `completed_at` timestamp.
+
+    ```typescript services/taskCompletion.service.ts
+    const completion = await taskCompletionRepository.create({
+      task_id,
+      user_id: userId,
+    });
+    ```
+  </Step>
+
+  <Step title="Award points and update streak">
+    The user's `points` are incremented by `task.points`. If this is the first completion of the day, `current_streak` is also incremented (and `max_streak` updated if a new record is set).
+
+    ```typescript services/taskCompletion.service.ts
+    const user = await userRepository.findById(userId);
+    if (user) {
+      let newStreak = user.current_streak;
+      let maxStreak = user.max_streak;
+
+      if (!hasCompletedToday) {
+        newStreak += 1;
+        if (newStreak > maxStreak) {
+          maxStreak = newStreak;
+        }
+      }
+
+      await userRepository.update(userId, {
+        points: user.points + task.points,
+        current_streak: newStreak,
+        max_streak: maxStreak,
+      });
+    }
+    ```
+  </Step>
+</Steps>
+
+## Challenge completion
+
+Completing a user challenge (`POST /api/user-challenges/:id/complete`) is a separate action from task completion and is handled by `userChallengeService.completeChallenge()`. It marks the `UserChallenge` record with `status: 'COMPLETED'` but does not directly award points — point rewards come from completing the individual tasks associated with the challenge.
+
+```typescript models/UserChallenge.ts
+export interface UserChallenge {
+  id: number;
+  user_id: string;
+  template_id: number;
+  status: 'ACTIVE' | 'COMPLETED' | 'ABANDONED';
+  start_date: Date;
+  completed_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+}
+```

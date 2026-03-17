@@ -1,0 +1,161 @@
+---
+title: "Authentication"
+description: "How JWT authentication works in Mais Hábito API."
+---
+
+Mais Hábito uses **JWT (JSON Web Tokens)** for stateless authentication and **bcrypt** for password hashing. After signing up or logging in, you receive a token that must be included in every subsequent request to a protected endpoint.
+
+## How it works
+
+1. The client sends credentials (email + password) to `/api/auth/signup` or `/api/auth/login`.
+2. The server hashes the password with bcrypt (10 salt rounds) and verifies it against the stored hash.
+3. On success, the server signs a JWT containing `userId`, `email`, and `name`, with a **30-day expiry**.
+4. The client stores the token and sends it as a `Bearer` token in the `Authorization` header on every subsequent request.
+5. `authMiddleware` intercepts incoming requests, splits the `Bearer <token>` string, and calls `authService.validateToken()` to verify the signature and expiry.
+6. If valid, `req.user` is populated with the decoded payload and the request proceeds to the controller.
+
+## Signup
+
+**POST** `/api/auth/signup`
+
+Create a new account. Returns a token immediately — no separate login step required.
+
+### Request body
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | Yes | Display name for the user |
+| `email` | string | Yes | Unique email address |
+| `password` | string | Yes | Plain-text password (hashed server-side) |
+
+### Example
+
+```bash
+curl -X POST http://localhost:3000/api/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Ada Lovelace", "email": "ada@example.com", "password": "securepassword"}'
+```
+
+### Response — `201 Created`
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "uuid-here",
+    "email": "ada@example.com",
+    "name": "Ada Lovelace",
+    "points": 0,
+    "current_streak": 0,
+    "max_streak": 0
+  }
+}
+```
+
+## Login
+
+**POST** `/api/auth/login`
+
+Authenticate an existing user. Returns a fresh token.
+
+### Request body
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `email` | string | Yes | Registered email address |
+| `password` | string | Yes | Account password |
+
+### Example
+
+```bash
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "ada@example.com", "password": "securepassword"}'
+```
+
+### Response — `200 OK`
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "uuid-here",
+    "email": "ada@example.com",
+    "name": "Ada Lovelace",
+    "points": 120,
+    "current_streak": 3,
+    "max_streak": 7
+  }
+}
+```
+
+## Using the token
+
+Include the token in the `Authorization` header for every protected request:
+
+```bash
+Authorization: Bearer <your_token_here>
+```
+
+### End-to-end example
+
+Sign up to get a token, then use it to fetch your profile:
+
+<CodeGroup>
+
+```bash Step 1 — sign up
+curl -X POST http://localhost:3000/api/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Ada Lovelace", "email": "ada@example.com", "password": "securepassword"}'
+# Save the returned "token" value
+```
+
+```bash Step 2 — call a protected endpoint
+curl http://localhost:3000/api/user \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+</CodeGroup>
+
+## Protected vs public endpoints
+
+Only the two auth routes are public. Every other endpoint requires a valid Bearer token:
+
+| Endpoint | Auth required |
+|---|---|
+| `POST /api/auth/signup` | No |
+| `POST /api/auth/login` | No |
+| `GET /api/user` | Yes |
+| `PATCH /api/user` | Yes |
+| `GET /api/challenge-templates` | Yes |
+| `POST /api/challenge-templates` | Yes |
+| `GET /api/user-challenges` | Yes |
+| `POST /api/user-challenges` | Yes |
+| `GET /api/tasks` | Yes |
+| `POST /api/tasks` | Yes |
+| `POST /api/task-completions` | Yes |
+
+## The auth middleware
+
+<Note>
+  `authMiddleware` (defined in `src/middlewares/auth.ts`) runs on every protected route. It reads the `Authorization` header, splits the `Bearer <token>` string, and calls `authService.validateToken()` to verify the JWT signature and expiry. If validation passes, it attaches `{ userId, email, name }` to `req.user` so controllers can access the authenticated user's identity without querying the database again.
+</Note>
+
+## Error responses
+
+| Scenario | HTTP status | Message |
+|---|---|---|
+| Missing `Authorization` header | `401` | `Token not provided` |
+| Malformed header (not `Bearer <token>`) | `401` | `Token format is invalid` |
+| Token string is empty | `401` | `Token is empty` |
+| Token expired or signature invalid | `401` | `Invalid token` |
+| Email already registered (signup) | `400` | `Email already exists` |
+| Wrong email or password (login) | `401` | `Email ou senha inválidos` |
+
+## Security notes
+
+<Warning>
+  Never store your JWT token in `localStorage` in a browser environment — it is vulnerable to XSS attacks. Prefer `httpOnly` cookies or a secure in-memory store. On the server side, keep your `JWT_SECRET` environment variable long, random, and never committed to source control.
+</Warning>
+
+Tokens expire after **30 days**. After expiry, the client must log in again to obtain a new token. There is currently no token refresh endpoint — a new token is issued on each login.

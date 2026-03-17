@@ -1,0 +1,104 @@
+---
+title: "Accept challenge"
+description: "Accept a challenge template and start it as an active challenge."
+---
+
+<Badge color="green">POST</Badge> `/api/user-challenges/accept`
+
+Requires authentication.
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token obtained from `/api/auth/login` or `/api/auth/signup`. Format: `Bearer <token>`.
+</ParamField>
+
+<Warning>
+  Only **one active challenge** is allowed at a time. Attempting to accept a new challenge while
+  one is already active returns a `400` error. Complete or abandon your current challenge before
+  starting a new one.
+</Warning>
+
+## Request body
+
+<ParamField body="templateId" type="number" required>
+  The numeric ID of the challenge template to accept.
+</ParamField>
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl --request POST \
+  --url https://api.maishabito.com/api/user-challenges/accept \
+  --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "templateId": 3
+  }'
+```
+
+</CodeGroup>
+
+## Response
+
+**201 Created**
+
+Returns the newly created user challenge object with status `ACTIVE`.
+
+<ResponseField name="id" type="number" required>
+  Unique numeric identifier for this user challenge.
+</ResponseField>
+
+<ResponseField name="user_id" type="string" required>
+  UUID of the authenticated user who accepted the challenge.
+</ResponseField>
+
+<ResponseField name="template_id" type="number" required>
+  ID of the challenge template this challenge is based on.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Current status of the challenge. Always `ACTIVE` on creation.
+</ResponseField>
+
+<ResponseField name="start_date" type="string" required>
+  ISO 8601 timestamp of when the challenge was started.
+</ResponseField>
+
+<ResponseField name="completed_at" type="string">
+  ISO 8601 timestamp of when the challenge was completed. `null` for active challenges.
+</ResponseField>
+
+<ResponseField name="notes" type="string">
+  Progress notes for the challenge. `null` if no notes have been added.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  ISO 8601 timestamp of when the record was created.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string" required>
+  ISO 8601 timestamp of the last update to this record.
+</ResponseField>
+
+```json Example response
+{
+  "id": 14,
+  "user_id": "a3f2c1d0-89b4-4e7a-b6f5-1234567890ab",
+  "template_id": 3,
+  "status": "ACTIVE",
+  "start_date": "2026-03-17T09:00:00.000Z",
+  "completed_at": null,
+  "notes": null,
+  "created_at": "2026-03-17T09:00:00.000Z",
+  "updated_at": "2026-03-17T09:00:00.000Z"
+}
+```
+
+## Errors
+
+| Status | Description |
+| ------ | ----------- |
+| `400`  | The user already has an active challenge. Message: `"Você já possui um desafio ativo"`. |
+| `401`  | Missing, invalid, or expired token. |
+| `404`  | No challenge template found with the given `templateId`. |

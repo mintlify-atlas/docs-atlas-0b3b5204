@@ -1,97 +1,77 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Mais Hábito API"
+description: "A gamified habit-tracking backend API that rewards users with points and streaks for completing daily tasks and challenges."
 ---
 
-## Setting up
-
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Set up and run the API in under 5 minutes.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Authentication" icon="lock" href="/authentication">
+    Learn how JWT-based auth works in this API.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="API Reference" icon="code" href="/api-reference/auth/signup">
+    Explore all endpoints with request/response details.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Gamification" icon="trophy" href="/concepts/gamification">
+    Understand the points, XP, and streak reward system.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What is Mais Hábito?
 
-Everything you need to create world-class documentation.
+**Mais Hábito** (More Habit) is a single-player backend API that helps users build better daily routines through gamification. Users earn points and maintain streaks by completing tasks and multi-day challenges — turning productivity into a game.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+### Key features
 
-## Need inspiration?
+<CardGroup cols={2}>
+  <Card title="JWT Authentication" icon="shield-check">
+    Secure signup and login with bcrypt password hashing and JSON Web Tokens.
+  </Card>
+  <Card title="Points & XP System" icon="star">
+    Every completed task awards points. Your score tracks your overall progress.
+  </Card>
+  <Card title="Streak Tracking" icon="fire">
+    Complete at least one task per day to maintain your streak. An overnight cron job resets streaks for missed days.
+  </Card>
+  <Card title="Challenge Catalog" icon="list-check">
+    Browse and accept multi-day challenge templates. Track progress with personal notes.
+  </Card>
+  <Card title="Daily Tasks & Routines" icon="calendar-check">
+    Create one-off tasks or recurring daily routines with custom point values.
+  </Card>
+  <Card title="Controller-Service-Repository" icon="layer-group">
+    Clean layered architecture separating routing, business logic, and database access.
+  </Card>
+</CardGroup>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Runtime | Node.js 20+ |
+| Language | TypeScript 5.9 |
+| Framework | Express 5 |
+| Database | PostgreSQL 16 |
+| Query builder | Knex.js |
+| Auth | JWT + bcrypt |
+| Scheduler | node-cron |
+
+## Base URL
+
+All API endpoints are relative to your server's base URL:
+
+```
+http://localhost:3000/api
+```
+
+## Need help?
+
+<CardGroup cols={2}>
+  <Card title="Introduction" icon="book-open" href="/introduction">
+    Project overview and architecture explanation.
+  </Card>
+  <Card title="Configuration" icon="gear" href="/configuration/environment">
+    Environment variables and database setup.
+  </Card>
+</CardGroup>

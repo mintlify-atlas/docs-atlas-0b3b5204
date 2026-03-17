@@ -1,122 +1,93 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Mais Hábito API",
+  "theme": "sequoia",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#848c8e",
+    "light": "#cfd0d2",
+    "dark": "#11161e"
   },
   "favicon": "/favicon.svg",
+  "logo": {
+    "light": "https://media.brand.dev/5ffd6ce4-2434-4b4b-920a-f8cacac8b48b.svg",
+    "dark": "https://media.brand.dev/5ffd6ce4-2434-4b4b-920a-f8cacac8b48b.svg"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/RafaeltiMoreira/mais-habito-api"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/RafaeltiMoreira/mais-habito-api"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
-            "pages": [
-              "index",
-              "quickstart",
-              "development"
-            ]
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart", "authentication"]
           },
           {
-            "group": "Customization",
-            "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
+            "group": "Core Concepts",
+            "pages": ["concepts/architecture", "concepts/gamification", "concepts/streaks"]
           },
           {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
-            ]
+            "group": "Configuration",
+            "pages": ["configuration/environment", "configuration/database"]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Auth",
+            "pages": ["api-reference/auth/signup", "api-reference/auth/login"]
+          },
+          {
+            "group": "User",
+            "pages": ["api-reference/user/get-profile", "api-reference/user/update-profile"]
+          },
+          {
+            "group": "Challenge Templates",
             "pages": [
-              "api-reference/introduction"
+              "api-reference/challenge-templates/list",
+              "api-reference/challenge-templates/get",
+              "api-reference/challenge-templates/create",
+              "api-reference/challenge-templates/delete"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "User Challenges",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/user-challenges/accept",
+              "api-reference/user-challenges/get-active",
+              "api-reference/user-challenges/list",
+              "api-reference/user-challenges/complete",
+              "api-reference/user-challenges/abandon",
+              "api-reference/user-challenges/update-notes"
             ]
+          },
+          {
+            "group": "Tasks",
+            "pages": [
+              "api-reference/tasks/create",
+              "api-reference/tasks/list",
+              "api-reference/tasks/update",
+              "api-reference/tasks/delete"
+            ]
+          },
+          {
+            "group": "Task Completions",
+            "pages": ["api-reference/task-completions/complete"]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

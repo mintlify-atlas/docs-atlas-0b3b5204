@@ -1,0 +1,166 @@
+---
+title: "Database Setup"
+description: "PostgreSQL setup, Knex.js configuration, and running migrations for Mais Hábito API."
+---
+
+Mais Hábito API uses **PostgreSQL 16** as its database and **Knex.js** as the query builder and migration runner.
+
+## Prerequisites
+
+- PostgreSQL 16 installed and running
+- A superuser or role with `CREATEDB` privileges
+
+## Initial setup
+
+<Steps>
+  <Step title="Start PostgreSQL">
+    Ensure the PostgreSQL server is running on your machine or is reachable
+    from the host where the API will run.
+
+    ```bash
+    # macOS (Homebrew)
+    brew services start postgresql@16
+
+    # Ubuntu / Debian
+    sudo systemctl start postgresql
+    ```
+  </Step>
+
+  <Step title="Create the database">
+    Connect with `psql` and create the database:
+
+    ```sql
+    CREATE DATABASE mais_habito;
+    ```
+
+    If you want a dedicated role:
+
+    ```sql
+    CREATE USER mais_habito_user WITH PASSWORD 'your_password';
+    GRANT ALL PRIVILEGES ON DATABASE mais_habito TO mais_habito_user;
+    ```
+  </Step>
+
+  <Step title="Configure environment variables">
+    Update your `.env` file with the credentials for the database you just
+    created. See [Environment Variables](/configuration/environment) for the
+    full variable list.
+
+    ```bash
+    DB_HOST=localhost
+    DB_PORT=5432
+    DB_NAME=mais_habito
+    DB_USER=postgres
+    DB_PASSWORD=your_password
+    ```
+  </Step>
+
+  <Step title="Run migrations">
+    Apply all migrations to create the schema:
+
+    ```bash
+    # Development (uses ts-node, reads .env automatically)
+    npm run migrate:dev
+
+    # Production (uses compiled dist/, env vars must be set in the environment)
+    npm run migrate
+    ```
+  </Step>
+</Steps>
+
+## Knex configuration
+
+The Knex configuration lives in `src/database/knexfile.ts`. It supports two
+connection modes:
+
+- **`DATABASE_URL`** — when this environment variable is set, Knex connects
+  via connection string (standard for managed platforms such as Railway or
+  Heroku).
+- **Individual credentials** — when `DATABASE_URL` is absent, Knex uses the
+  `DB_*` variables from `src/config/env.ts`.
+
+```typescript src/database/knexfile.ts
+import type { Knex } from 'knex';
+import { config as appConfig } from '../config/env';
+import path from 'path';
+
+const isProd = process.env.NODE_ENV === 'production';
+
+const knexConfig: Knex.Config = {
+  client: 'pg',
+  connection: process.env.DATABASE_URL ? {
+    connectionString: process.env.DATABASE_URL,
+    ssl: isProd ? { rejectUnauthorized: false } : false
+  } : {
+    host: appConfig.database.host,
+    port: appConfig.database.port,
+    database: appConfig.database.name,
+    user: appConfig.database.user,
+    password: appConfig.database.password,
+    ssl: isProd ? { rejectUnauthorized: false } : false,
+  },
+  pool: {
+    min: 2,
+    max: 10
+  },
+  migrations: {
+    directory: path.join(__dirname, 'migrations'),
+    extension: isProd ? 'js' : 'ts',
+  },
+};
+
+export default knexConfig;
+```
+
+The database connection singleton exported from `src/database/connection.ts` is
+imported throughout the application:
+
+```typescript src/database/connection.ts
+import knex from 'knex';
+import knexConfig from './knexfile';
+
+const db = knex(knexConfig);
+
+export default db;
+```
+
+## Migration commands
+
+| Command | Description |
+|---|---|
+| `npm run migrate:dev` | Runs migrations using `ts-node` directly against the TypeScript source files. Loads `.env` automatically. |
+| `npm run migrate` | Runs migrations from the compiled `dist/` directory. Environment variables must be set externally. |
+
+<Note>
+  Migrations execute in timestamp order based on their filename prefix (e.g.
+  `20260127234005_`). Never rename a migration file after it has been applied
+  to any environment — doing so causes Knex to treat it as a new, unapplied
+  migration.
+</Note>
+
+## Migration files
+
+The following migrations are applied in order when you run `migrate:latest`.
+
+| File | What it does |
+|---|---|
+| `20260127234005_create_users_table` | Creates the `users` table |
+| `20260203000059_create_user_auth_providers_table` | Creates the `user_auth_providers` table with indexes |
+| `20260203000758_add_foreign_key_user_auth_providers` | Adds the `user_id → users.id` foreign key with `ON DELETE CASCADE` |
+| `20260314000100_create_challenge_templates` | Creates the `challenge_templates` table |
+| `20260314000110_create_user_challenges` | Creates the `user_challenges` table |
+| `20260314000120_create_tasks` | Creates the `tasks` table |
+| `20260314000130_create_task_completions` | Creates the `task_completions` table |
+| `20260314001000_seed_challenge_templates` | Seeds 7 built-in challenge templates |
+| `20260315203000_add_notes_to_user_challenges` | Adds the nullable `notes` column to `user_challenges` |
+
+## Schema overview
+
+| Table | Primary key | Key columns |
+|---|---|---|
+| `users` | `id` (UUID) | `name`, `points`, `current_streak`, `max_streak` |
+| `user_auth_providers` | `id` (UUID) | `user_id`, `provider` (`local`/`google`/`facebook`), `email`, `password`, `provider_id` |
+| `challenge_templates` | `id` (serial) | `title`, `description`, `duration_days` |
+| `user_challenges` | `id` (serial) | `user_id`, `template_id`, `status` (`ACTIVE`/`COMPLETED`/`ABANDONED`), `start_date`, `completed_at`, `notes` |
+| `tasks` | `id` (serial) | `user_id`, `challenge_template_id`, `title`, `points`, `is_daily_routine` |
+| `task_completions` | `id` (serial) | `user_id`, `task_id`, `completed_at` |

@@ -1,0 +1,106 @@
+---
+title: "Environment Variables"
+description: "All environment variables required to run Mais Hábito API."
+---
+
+The API is configured entirely through environment variables. Copy `.env.example` to `.env` and fill in the values before starting the server.
+
+## .env.example
+
+```bash .env.example
+# Server
+PORT=3000
+NODE_ENV=development
+
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=mais_habito
+DB_USER=postgres
+DB_PASSWORD=your_password_here
+
+# JWT
+JWT_SECRET=your_super_secret_key_here
+
+FRONTEND_URL=http://localhost:PORT_HERE
+```
+
+## Variable reference
+
+| Variable | Default | Required | Description |
+|---|---|---|---|
+| `PORT` | `3000` | No | Port the HTTP server listens on |
+| `NODE_ENV` | `development` | No | Runtime environment (`development` or `production`) |
+| `DB_HOST` | `localhost` | Yes | PostgreSQL host |
+| `DB_PORT` | `5432` | Yes | PostgreSQL port |
+| `DB_NAME` | `mais-habito-db` | Yes | Database name |
+| `DB_USER` | `postgres` | Yes | Database user |
+| `DB_PASSWORD` | _(empty)_ | Yes | Database password |
+| `JWT_SECRET` | `change-this-secret` | Yes | Secret key used to sign JWT tokens |
+| `FRONTEND_URL` | — | Yes | Allowed CORS origin for the frontend app |
+
+## Variable details
+
+<ParamField path="env.PORT" type="number" default="3000">
+  Port the Express server binds to. Override this when running multiple services
+  on the same host or deploying behind a reverse proxy.
+</ParamField>
+
+<ParamField path="env.NODE_ENV" type="string" default="development">
+  Controls runtime behavior: logging verbosity, `.env` file loading, SSL
+  enforcement, and migration file extension. Accepted values are
+  `development` and `production`.
+</ParamField>
+
+<ParamField path="env.DB_HOST" type="string" default="localhost" required>
+  Hostname or IP address of the PostgreSQL server.
+</ParamField>
+
+<ParamField path="env.DB_PORT" type="number" default="5432" required>
+  TCP port PostgreSQL is listening on.
+</ParamField>
+
+<ParamField path="env.DB_NAME" type="string" default="mais-habito-db" required>
+  Name of the PostgreSQL database. The `.env.example` uses `mais_habito`;
+  make sure the value matches the database you created.
+</ParamField>
+
+<ParamField path="env.DB_USER" type="string" default="postgres" required>
+  PostgreSQL role used to connect to the database.
+</ParamField>
+
+<ParamField path="env.DB_PASSWORD" type="string" required>
+  Password for the PostgreSQL role specified in `DB_USER`.
+</ParamField>
+
+<ParamField path="env.JWT_SECRET" type="string" required>
+  Secret string used to sign and verify JWT access tokens. Must be kept
+  private — never commit it to version control.
+</ParamField>
+
+<ParamField path="env.FRONTEND_URL" type="string" required>
+  Full origin URL of the frontend application (e.g. `http://localhost:5173`).
+  This value is passed directly to the CORS middleware as the allowed origin.
+</ParamField>
+
+<Warning>
+  In production, `JWT_SECRET` must be a long, randomly generated string. Using
+  a weak or guessable secret allows attackers to forge valid tokens and
+  authenticate as any user.
+</Warning>
+
+<Tip>
+  Generate a cryptographically secure secret with:
+
+  ```bash
+  openssl rand -base64 32
+  ```
+</Tip>
+
+<Note>
+  When `NODE_ENV` is set to `development`, the API automatically loads
+  variables from a `.env` file at the project root via `dotenv`. In
+  `production`, environment variables must be injected by the host environment
+  (e.g. Docker, Railway, or a process manager) — the `.env` file is not read.
+  SSL for the database connection is also enabled automatically in production.
+</Note>

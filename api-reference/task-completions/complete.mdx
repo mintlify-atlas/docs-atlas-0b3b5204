@@ -1,0 +1,138 @@
+---
+title: 'Complete a task'
+description: 'Record a task completion and apply gamification effects — points, streaks, and personal records.'
+api: 'POST /api/task-completions'
+---
+
+This is the core gamification endpoint. Calling it does three things atomically:
+
+1. Creates a `TaskCompletion` record.
+2. Adds the task's `points` value to the user's total `points`.
+3. If this is the user's **first completion of the day**, increments `current_streak` and updates `max_streak` if the new streak exceeds the previous record.
+
+<Info>
+  The streak counter increments once per calendar day, on the **first** task completion of that day — regardless of which task is completed. Completing multiple tasks on the same day does not increment the streak more than once.
+</Info>
+
+<Warning>
+  The streak counter only goes **up** at completion time. Whether yesterday's streak should be broken is evaluated by an overnight cron job, not in real time. This means `current_streak` may appear higher than expected until the cron runs. If you need to check whether a streak is still valid, compare `current_streak` against the user's last-completion timestamp.
+</Warning>
+
+## Request body
+
+<ParamField body="task_id" type="number" required>
+  ID of the task being completed.
+</ParamField>
+
+## Response
+
+**201 Created** — Returns the new task completion record.
+
+<ResponseField name="id" type="number" required>
+  Auto-incremented unique identifier for this completion record.
+</ResponseField>
+
+<ResponseField name="task_id" type="number" required>
+  ID of the task that was completed.
+</ResponseField>
+
+<ResponseField name="user_id" type="string" required>
+  UUID of the user who completed the task.
+</ResponseField>
+
+<ResponseField name="completed_at" type="string" required>
+  ISO 8601 timestamp set to the server time at the moment of completion.
+</ResponseField>
+
+## Side effects
+
+The following changes are applied to the user's profile as part of the same request:
+
+| Field | Change |
+| ----- | ------ |
+| `points` | Increased by `task.points`. |
+| `current_streak` | Incremented by `1` if this is the first completion today; unchanged otherwise. |
+| `max_streak` | Updated to `current_streak` if the new streak exceeds the stored record. |
+
+### Streak logic
+
+The exact logic executed in `taskCompletion.service.ts`:
+
+```typescript
+const todayCompletions = await taskCompletionRepository.findByUserIdToday(userId);
+const hasCompletedToday = todayCompletions.length > 0;
+
+// completion record is written here
+
+if (!hasCompletedToday) {
+    newStreak += 1;
+    if (newStreak > maxStreak) {
+        maxStreak = newStreak;
+    }
+}
+
+await userRepository.update(userId, {
+    points: user.points + task.points,
+    current_streak: newStreak,
+    max_streak: maxStreak
+});
+```
+
+`findByUserIdToday` queries completions where `completed_at >= CURRENT_DATE AND completed_at < CURRENT_DATE + INTERVAL '1 day'`, so "today" is always the server's current calendar date in UTC.
+
+<Note>
+  There is no unique constraint on `(user_id, task_id, date)` in the database schema. The same task can be completed multiple times on the same day. Each call creates a new completion record and awards points again. Only the streak counter is bounded to once per day.
+</Note>
+
+## Errors
+
+| Status | Condition |
+| ------ | --------- |
+| `404`  | No task found with the given `task_id`. |
+| `400`  | The task exists but belongs to a different user. |
+| `401`  | Missing or invalid authentication token. |
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://api.maishabito.com/api/task-completions \
+  --header 'Authorization: Bearer <token>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "task_id": 42
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 201
+{
+  "id": 301,
+  "task_id": 42,
+  "user_id": "a3f1c2d4-0e5b-4a7f-b891-2c3d4e5f6a7b",
+  "completed_at": "2026-03-17T14:23:05.000Z"
+}
+```
+
+```json 404
+{
+  "error": "Task not found"
+}
+```
+
+```json 400
+{
+  "error": "This task doesn't belong to you"
+}
+```
+
+```json 401
+{
+  "error": "User not authenticated"
+}
+```
+
+</ResponseExample>

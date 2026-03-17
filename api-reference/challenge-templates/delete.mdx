@@ -1,0 +1,48 @@
+---
+title: "Delete challenge template"
+description: "Permanently delete a challenge template by its ID."
+---
+
+<Badge color="red">DELETE</Badge> `/api/challenge-templates/:id`
+
+Requires authentication.
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token obtained from `/api/auth/login` or `/api/auth/signup`. Format: `Bearer <token>`.
+</ParamField>
+
+<Warning>
+  This action is permanent and cannot be undone. Deleting a seeded template removes it for all
+  users.
+</Warning>
+
+## Path parameters
+
+<ParamField path="id" type="number" required>
+  The numeric ID of the challenge template to delete.
+</ParamField>
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl --request DELETE \
+  --url https://api.maishabito.com/api/challenge-templates/7 \
+  --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+```
+
+</CodeGroup>
+
+## Response
+
+**204 No Content**
+
+The template was deleted successfully. No response body is returned.
+
+## Errors
+
+| Status | Description |
+| ------ | ----------- |
+| `401`  | Missing, invalid, or expired token. |
+| `404`  | No challenge template found for the given ID. |

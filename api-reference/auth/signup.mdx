@@ -1,0 +1,95 @@
+---
+title: "Sign Up"
+description: "Create a new user account and receive a JWT token."
+---
+
+<Badge color="green">POST</Badge> `/api/auth/signup`
+
+No authentication required.
+
+## Request body
+
+<ParamField body="name" type="string" required>
+  The user's display name.
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  The user's email address. Must be unique across all accounts.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  The user's password. Minimum 6 characters.
+</ParamField>
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl --request POST \
+  --url https://api.maishabito.com/api/auth/signup \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Maria Silva",
+    "email": "maria@example.com",
+    "password": "s3cr3tpass"
+  }'
+```
+
+</CodeGroup>
+
+## Response
+
+**201 Created**
+
+<ResponseField name="token" type="string" required>
+  A signed JWT valid for 30 days. Include this token in the `Authorization` header for authenticated requests.
+</ResponseField>
+
+<ResponseField name="user" type="object" required>
+  <Expandable title="properties" defaultOpen>
+    <ResponseField name="id" type="string">
+      Unique identifier for the user.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      The user's display name.
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      The user's email address.
+    </ResponseField>
+    <ResponseField name="points" type="number">
+      Total habit points accumulated. Starts at `0`.
+    </ResponseField>
+    <ResponseField name="current_streak" type="number">
+      Current consecutive days with at least one completed habit. Starts at `0`.
+    </ResponseField>
+    <ResponseField name="max_streak" type="number">
+      All-time highest streak. Starts at `0`.
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      ISO 8601 timestamp of when the account was created.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```json Example response
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "a3f2c1d0-89b4-4e7a-b6f5-1234567890ab",
+    "name": "Maria Silva",
+    "email": "maria@example.com",
+    "points": 0,
+    "current_streak": 0,
+    "max_streak": 0,
+    "created_at": "2026-03-17T10:00:00.000Z"
+  }
+}
+```
+
+## Errors
+
+| Status | Description |
+| ------ | ----------- |
+| `400`  | Email is already in use, or request body fails validation. |
+| `500`  | Internal server error. |

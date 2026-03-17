@@ -1,0 +1,76 @@
+---
+title: "Introduction"
+description: "Overview of Mais Hábito API — architecture, key concepts, and how to get started."
+---
+
+## What is Mais Hábito?
+
+Mais Hábito is a gamified habit-tracking backend REST API that helps users build better routines through a points and streaks reward system. As a single-player application, it lets users organize their daily routine by completing tasks and challenges — earning points and XP along the way, and maintaining streaks to track consistency over time.
+
+The API is built for developers who want a fully-featured backend for productivity or habit-tracking applications, with authentication, user profiles, challenge management, and task completion already handled.
+
+## Tech stack
+
+| Technology | Role |
+|---|---|
+| Node.js 20+ | JavaScript runtime |
+| TypeScript 5.9 | Typed superset of JavaScript |
+| Express 5 | HTTP server and routing framework |
+| PostgreSQL 16 | Relational database |
+| Knex.js | Query builder and database migrations |
+| JWT (`jsonwebtoken`) | Stateless authentication tokens |
+| bcrypt | Password hashing |
+| node-cron | Scheduled jobs (streak reset calculations) |
+| cors / dotenv | Network security and environment configuration |
+
+## Resource groups
+
+The API exposes six resource groups under the base URL `http://localhost:3000/api`:
+
+| Route prefix | Description |
+|---|---|
+| `/api/auth` | Account creation and login |
+| `/api/user` | User profile read and update |
+| `/api/challenge-templates` | Challenge catalog — CRUD for challenge models |
+| `/api/user-challenges` | Accept, complete, abandon, or annotate active challenges |
+| `/api/tasks` | Daily and one-off task management (CRUD) |
+| `/api/task-completions` | Mark tasks complete — primary mechanism for earning XP and points |
+
+## Architecture
+
+The project follows a **Controller → Service → Repository** layered pattern:
+
+```
+HTTP Request
+     │
+     ▼
+  Router          — Maps endpoints to controller methods
+     │
+     ▼
+  Middleware      — authMiddleware validates Bearer token; errorHandler normalises errors
+     │
+     ▼
+  Controller      — Reads req/res, extracts payload, delegates to service
+     │
+     ▼
+  Service         — Business logic: validation, gamification rules, streak calculation
+     │
+     ▼
+  Repository      — Raw Knex.js queries; the only layer that talks to PostgreSQL
+     │
+     ▼
+  PostgreSQL      — Persistent storage
+```
+
+This separation means database internals are hidden behind repositories, business rules are tested independently in services, and controllers stay thin and focused on HTTP concerns.
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get the API running locally in under 5 minutes.
+  </Card>
+  <Card title="Authentication" icon="lock" href="/authentication">
+    Learn how JWT authentication works and how to call protected endpoints.
+  </Card>
+</CardGroup>

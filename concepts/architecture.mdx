@@ -1,0 +1,173 @@
+---
+title: "Architecture"
+description: "How Mais Hábito API is structured — layers, patterns, and request lifecycle."
+---
+
+Mais Hábito API follows a **Controller-Service-Repository** pattern, separating HTTP handling, business logic, and database access into distinct, independently testable layers.
+
+<Note>
+  This separation makes each layer independently testable and maintainable. You can swap out the database layer, add new business rules to the service layer, or change HTTP handling — without touching the other layers.
+</Note>
+
+## Layers
+
+<Steps>
+  <Step title="Routes">
+    Map HTTP endpoints to their respective controller functions. Each resource has its own route file registered in `index.ts`.
+
+    ```typescript index.ts
+    app.use('/api/auth', authRoutes);
+    app.use('/api/user', userRoutes);
+    app.use('/api/challenge-templates', challengeTemplateRoutes);
+    app.use('/api/user-challenges', userChallengeRoutes);
+    app.use('/api/tasks', taskRoutes);
+    app.use('/api/task-completions', taskCompletionRoutes);
+    ```
+  </Step>
+
+  <Step title="Middlewares">
+    Intercept requests before they reach controllers. Two primary middlewares are applied:
+
+    - **`authMiddleware`** — Validates the `Authorization: Bearer <token>` header, calls `authService.validateToken()`, and attaches `req.user` (with `userId`, `email`, and `name`) to the request object for downstream use.
+    - **`errorHandler`** — Global error handler registered last in the middleware stack. Catches any error passed to `next(error)` and serializes it into a structured JSON response.
+
+    ```typescript middlewares/auth.ts
+    export const authMiddleware = async (
+      req: AuthRequest,
+      res: Response,
+      next: NextFunction
+    ) => {
+      const authHeader = req.headers.authorization;
+      if (!authHeader) throw new UnauthorizedError('Token not provided');
+
+      const [, token] = authHeader.split(' ');
+      const decoded = await authService.validateToken(token);
+
+      req.user = {
+        userId: decoded.userId,
+        email: decoded.email,
+        name: decoded.name,
+      };
+
+      next();
+    };
+    ```
+  </Step>
+
+  <Step title="Controllers">
+    Receive the Express `req` and `res` objects, extract and lightly validate parameters, then delegate all business logic to the service layer. Controllers do not query the database directly.
+  </Step>
+
+  <Step title="Services">
+    The business logic layer. Services enforce domain rules — such as gamification point calculations, streak increments, and ownership checks — before calling repository methods. All `AppError` subclass throws happen here.
+  </Step>
+
+  <Step title="Repositories">
+    Contain pure Knex.js (raw SQL) database queries, isolated from any business logic. Each repository operates on a single table or closely related set of tables and returns plain model objects.
+
+    ```typescript repositories/userRepository.ts
+    async update(id: string, data: Partial<User>): Promise<User | null> {
+      // Builds a dynamic SET clause from the provided fields
+      // then executes: UPDATE users SET ... WHERE id = ? RETURNING *
+    }
+    ```
+  </Step>
+</Steps>
+
+## Request lifecycle
+
+```
+HTTP Request
+    │
+    ▼
+  Route           (matches URL + HTTP method, delegates to controller)
+    │
+    ▼
+  Middleware      (authMiddleware validates JWT, attaches req.user)
+    │
+    ▼
+  Controller      (extracts params, calls service)
+    │
+    ▼
+  Service         (enforces business rules, throws AppError on failure)
+    │
+    ▼
+  Repository      (executes SQL query, returns model)
+    │
+    ▼
+  Database        (PostgreSQL)
+    │
+    ▼
+  Response        (controller serializes result → JSON)
+```
+
+Errors thrown at any layer propagate up to the global `errorHandler` middleware via Express's `next(error)` mechanism.
+
+## Error handling
+
+All application errors extend the base `AppError` class, which attaches an HTTP status code to every thrown error.
+
+```typescript errors/AppError.ts
+export class AppError extends Error {
+  public readonly statusCode: number;
+
+  constructor(message: string, statusCode: number = 500) {
+    super(message);
+    this.statusCode = statusCode;
+    this.name = this.constructor.name;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export class BadRequestError extends AppError {
+  constructor(message: string) { super(message, 400); }
+}
+
+export class UnauthorizedError extends AppError {
+  constructor(message: string) { super(message, 401); }
+}
+
+export class NotFoundError extends AppError {
+  constructor(message: string) { super(message, 404); }
+}
+
+export class ConflictError extends AppError {
+  constructor(message: string) { super(message, 409); }
+}
+```
+
+| Error class | HTTP status | Typical usage |
+|---|---|---|
+| `AppError` | 500 | Base class; generic server error |
+| `BadRequestError` | 400 | Invalid input, ownership violations |
+| `UnauthorizedError` | 401 | Missing or invalid JWT |
+| `NotFoundError` | 404 | Resource does not exist |
+| `ConflictError` | 409 | Duplicate resource |
+
+## Middleware stack
+
+The full middleware stack as registered in `index.ts`:
+
+```typescript index.ts
+const app = express();
+
+// Global middlewares
+app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
+app.use(express.json());
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/challenge-templates', challengeTemplateRoutes);
+app.use('/api/user-challenges', userChallengeRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/task-completions', taskCompletionRoutes);
+
+// Error handler (must be last)
+app.use(errorHandler);
+
+// Background jobs
+startStreakCronJob();
+```
+
+Order matters: `cors` and `express.json()` run on every request, route handlers run next, and `errorHandler` is registered last so it can catch errors from all preceding middleware and routes.

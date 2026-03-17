@@ -1,0 +1,137 @@
+---
+title: "List challenges"
+description: "List all challenges for the authenticated user across all statuses."
+---
+
+<Badge color="blue">GET</Badge> `/api/user-challenges`
+
+Requires authentication.
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token obtained from `/api/auth/login` or `/api/auth/signup`. Format: `Bearer <token>`.
+</ParamField>
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl --request GET \
+  --url https://api.maishabito.com/api/user-challenges \
+  --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+```
+
+</CodeGroup>
+
+## Response
+
+**200 OK**
+
+Returns an array of all user challenge objects, including `ACTIVE`, `COMPLETED`, and `ABANDONED`
+challenges. Results are ordered by `start_date` descending (most recent first). Each object
+includes the associated template data.
+
+Returns an empty array `[]` if the user has never accepted a challenge.
+
+<ResponseField name="id" type="number" required>
+  Unique numeric identifier for this user challenge.
+</ResponseField>
+
+<ResponseField name="user_id" type="string" required>
+  UUID of the authenticated user.
+</ResponseField>
+
+<ResponseField name="template_id" type="number" required>
+  ID of the challenge template this challenge is based on.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Current status of the challenge. One of `ACTIVE`, `COMPLETED`, or `ABANDONED`.
+</ResponseField>
+
+<ResponseField name="start_date" type="string" required>
+  ISO 8601 timestamp of when the challenge was started.
+</ResponseField>
+
+<ResponseField name="completed_at" type="string">
+  ISO 8601 timestamp of when the challenge was completed. `null` if not yet completed.
+</ResponseField>
+
+<ResponseField name="notes" type="string">
+  Progress notes for the challenge. `null` if none have been added.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  ISO 8601 timestamp of when the record was created.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string" required>
+  ISO 8601 timestamp of the last update to this record.
+</ResponseField>
+
+<ResponseField name="template" type="object" required>
+  The challenge template this challenge is based on.
+
+  <Expandable title="template fields">
+    <ResponseField name="template.id" type="number" required>
+      Unique numeric identifier of the template.
+    </ResponseField>
+
+    <ResponseField name="template.title" type="string" required>
+      Display name of the challenge.
+    </ResponseField>
+
+    <ResponseField name="template.description" type="string" required>
+      Full description of the challenge goal and instructions.
+    </ResponseField>
+
+    <ResponseField name="template.duration_days" type="number" required>
+      Number of consecutive days the challenge runs.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```json Example response
+[
+  {
+    "id": 14,
+    "user_id": "a3f2c1d0-89b4-4e7a-b6f5-1234567890ab",
+    "template_id": 3,
+    "status": "ACTIVE",
+    "start_date": "2026-03-17T09:00:00.000Z",
+    "completed_at": null,
+    "notes": "Terceiro dia seguido. Sentindo a diferença!",
+    "created_at": "2026-03-17T09:00:00.000Z",
+    "updated_at": "2026-03-17T09:00:00.000Z",
+    "template": {
+      "id": 3,
+      "title": "Desafio de 21 Dias",
+      "description": "Vinte e um dias para transformar uma ação em hábito consolidado.",
+      "duration_days": 21
+    }
+  },
+  {
+    "id": 9,
+    "user_id": "a3f2c1d0-89b4-4e7a-b6f5-1234567890ab",
+    "template_id": 1,
+    "status": "COMPLETED",
+    "start_date": "2026-02-01T08:00:00.000Z",
+    "completed_at": "2026-02-08T20:14:00.000Z",
+    "notes": "Completei os 7 dias! Valeu muito a pena.",
+    "created_at": "2026-02-01T08:00:00.000Z",
+    "updated_at": "2026-02-08T20:14:00.000Z",
+    "template": {
+      "id": 1,
+      "title": "Desafio de 7 Dias",
+      "description": "Sete dias para começar a construir um novo hábito.",
+      "duration_days": 7
+    }
+  }
+]
+```
+
+## Errors
+
+| Status | Description |
+| ------ | ----------- |
+| `401`  | Missing, invalid, or expired token. |

@@ -1,0 +1,124 @@
+---
+title: "Get active challenge"
+description: "Retrieve the authenticated user's currently active challenge, joined with template data."
+---
+
+<Badge color="blue">GET</Badge> `/api/user-challenges/active`
+
+Requires authentication.
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token obtained from `/api/auth/login` or `/api/auth/signup`. Format: `Bearer <token>`.
+</ParamField>
+
+<Note>
+  When the user has no active challenge, the endpoint returns `null` with a `200 OK` status — not
+  a `404`. Always check whether the response body is `null` before accessing its fields.
+</Note>
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl --request GET \
+  --url https://api.maishabito.com/api/user-challenges/active \
+  --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+```
+
+</CodeGroup>
+
+## Response
+
+**200 OK**
+
+Returns the active user challenge object joined with its template, or `null` if no challenge is
+currently active.
+
+<ResponseField name="id" type="number" required>
+  Unique numeric identifier for this user challenge.
+</ResponseField>
+
+<ResponseField name="user_id" type="string" required>
+  UUID of the authenticated user.
+</ResponseField>
+
+<ResponseField name="template_id" type="number" required>
+  ID of the challenge template this challenge is based on.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Current status. Always `ACTIVE` for this endpoint.
+</ResponseField>
+
+<ResponseField name="start_date" type="string" required>
+  ISO 8601 timestamp of when the challenge was started.
+</ResponseField>
+
+<ResponseField name="completed_at" type="string">
+  Always `null` for active challenges.
+</ResponseField>
+
+<ResponseField name="notes" type="string">
+  Progress notes for the challenge. `null` if none have been added.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  ISO 8601 timestamp of when the record was created.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string" required>
+  ISO 8601 timestamp of the last update to this record.
+</ResponseField>
+
+<ResponseField name="template" type="object" required>
+  The challenge template this challenge is based on.
+
+  <Expandable title="template fields">
+    <ResponseField name="template.id" type="number" required>
+      Unique numeric identifier of the template.
+    </ResponseField>
+
+    <ResponseField name="template.title" type="string" required>
+      Display name of the challenge.
+    </ResponseField>
+
+    <ResponseField name="template.description" type="string" required>
+      Full description of the challenge goal and instructions.
+    </ResponseField>
+
+    <ResponseField name="template.duration_days" type="number" required>
+      Number of consecutive days the challenge runs.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```json Example response (active challenge)
+{
+  "id": 14,
+  "user_id": "a3f2c1d0-89b4-4e7a-b6f5-1234567890ab",
+  "template_id": 3,
+  "status": "ACTIVE",
+  "start_date": "2026-03-17T09:00:00.000Z",
+  "completed_at": null,
+  "notes": "Terceiro dia seguido. Sentindo a diferença!",
+  "created_at": "2026-03-17T09:00:00.000Z",
+  "updated_at": "2026-03-17T09:00:00.000Z",
+  "template": {
+    "id": 3,
+    "title": "Desafio de 21 Dias",
+    "description": "Vinte e um dias para transformar uma ação em hábito consolidado.",
+    "duration_days": 21
+  }
+}
+```
+
+```json Example response (no active challenge)
+null
+```
+
+## Errors
+
+| Status | Description |
+| ------ | ----------- |
+| `401`  | Missing, invalid, or expired token. |

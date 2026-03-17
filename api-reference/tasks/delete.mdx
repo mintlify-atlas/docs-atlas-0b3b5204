@@ -1,0 +1,61 @@
+---
+title: 'Delete task'
+description: 'Permanently delete a task owned by the authenticated user.'
+api: 'DELETE /api/tasks/{taskId}'
+---
+
+## Path parameters
+
+<ParamField path="taskId" type="number" required>
+  ID of the task to delete.
+</ParamField>
+
+## Response
+
+**204 No Content** — The task was deleted. The response body is empty.
+
+All task completion records associated with this task are also deleted automatically via the database `ON DELETE CASCADE` constraint.
+
+## Errors
+
+| Status | Condition |
+| ------ | --------- |
+| `400`  | The task exists but belongs to a different user. |
+| `404`  | No task found with the given `taskId`. |
+| `401`  | Missing or invalid authentication token. |
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url https://api.maishabito.com/api/tasks/42 \
+  --header 'Authorization: Bearer <token>'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```text 204
+(empty body)
+```
+
+```json 404
+{
+  "error": "Task not found"
+}
+```
+
+```json 400
+{
+  "error": "You don't have permission to delete this task"
+}
+```
+
+```json 401
+{
+  "error": "User not authenticated"
+}
+```
+
+</ResponseExample>

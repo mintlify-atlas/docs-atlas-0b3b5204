@@ -1,0 +1,103 @@
+---
+title: "Streaks"
+description: "How daily streaks are tracked, incremented, and reset in Mais Hábito API."
+---
+
+A streak measures how many consecutive days a user has completed at least one task. Streaks are one of the core motivational mechanics in Mais Hábito.
+
+<Warning>
+  Missing a day resets `current_streak` to 0. The `max_streak` field is never reduced — it permanently records the user's all-time highest streak.
+</Warning>
+
+## User model — streak fields
+
+```typescript models/User.ts
+export interface User {
+  id: string;
+  name: string;
+  points: number;
+  current_streak: number;  // Days in the current unbroken run
+  max_streak: number;      // All-time personal best
+  created_at: Date;
+  updated_at: Date;
+}
+```
+
+## How streaks are incremented
+
+Streak incrementing happens inside `taskCompletionService.completeTask()`, triggered by `POST /api/task-completions`. Only the **first task completion of the day** advances the streak; subsequent completions on the same day have no further effect on `current_streak`.
+
+```typescript services/taskCompletion.service.ts
+const todayCompletions =
+  await taskCompletionRepository.findByUserIdToday(userId);
+const hasCompletedToday = todayCompletions.length > 0;
+
+// ... create the TaskCompletion record ...
+
+let newStreak = user.current_streak;
+let maxStreak = user.max_streak;
+
+// Only increment on the first completion of the day
+if (!hasCompletedToday) {
+  newStreak += 1;
+  if (newStreak > maxStreak) {
+    maxStreak = newStreak;
+  }
+}
+
+await userRepository.update(userId, {
+  points: user.points + task.points,
+  current_streak: newStreak,
+  max_streak: maxStreak,
+});
+```
+
+<Note>
+  "Today" is determined by the UTC date. The query in `taskCompletionRepository.findByUserIdToday()` compares `completed_at` against the current UTC date. Users in time zones where midnight differs from UTC may see a streak advance slightly earlier or later than their local midnight.
+</Note>
+
+## The overnight streak-reset cron job
+
+Incrementing the streak at completion time is only half of the mechanism. The other half is detecting when a user **missed** a day. This is handled by a scheduled cron job defined in `src/jobs/streakReset.job.ts` and started at server boot via `startStreakCronJob()`.
+
+The job runs every day at **midnight UTC** using `node-cron`:
+
+```typescript jobs/streakReset.job.ts
+export const startStreakCronJob = () => {
+  // Runs daily at 00:00 UTC
+  cron.schedule('0 0 * * *', async () => {
+    console.log('[Cron Job] Checking and resetting streaks...');
+
+    const result = await db.raw(`
+      UPDATE users
+      SET current_streak = 0
+      WHERE id NOT IN (
+        SELECT DISTINCT user_id
+        FROM task_completions
+        WHERE completed_at >= CURRENT_DATE - INTERVAL '1 day'
+          AND completed_at < CURRENT_DATE
+      ) AND current_streak > 0
+      RETURNING id
+    `);
+
+    console.log(
+      `[Cron Job] Reset streaks for ${result.rows.length} users.`
+    );
+  });
+};
+```
+
+The SQL logic: any user whose `current_streak` is greater than 0 **and** who has no `task_completions` row with a `completed_at` in yesterday's date window has their `current_streak` set to 0.
+
+## Streak timeline example
+
+| Day | Action | `current_streak` | `max_streak` |
+|-----|--------|------------------|--------------|
+| Day 1 | Completes a task | 1 | 1 |
+| Day 2 | Completes a task | 2 | 2 |
+| Day 3 | Completes a task | 3 | 3 |
+| Day 4 | No task completed | 0 | 3 |
+| Day 5 | Completes a task | 1 | 3 |
+| Day 6 | Completes a task | 2 | 3 |
+
+After the missed day (Day 4), the cron job resets `current_streak` to 0. When the user resumes on Day 5, the streak begins rebuilding from 1. The `max_streak` of 3 is preserved throughout.
